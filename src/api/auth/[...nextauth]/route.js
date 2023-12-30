@@ -1,10 +1,9 @@
 "use client";
 import NextAuth from 'next-auth';
-import GoogleProvider from 'next-auth/providers/google';
-import { connectToDB } from '../../../../utils/database';
-import { NextAuthOptions } from 'next-auth';
-import User from '@/app/models/UsersModel';
-import { signIn } from 'next-auth/react';
+import GoogleProvider from  'next-auth/providers/google';
+import { connectToDB } from '../../../utils/database';
+import User from '../../../models/UsersModel';
+import { signIn } from 'next-auth/react'
 
 
 const handler = NextAuth({
