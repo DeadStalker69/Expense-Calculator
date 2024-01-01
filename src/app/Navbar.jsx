@@ -16,7 +16,6 @@ const Navbar = () => {
   }, []);
 
   return (
-    console.log({providers}),
     <nav className='flex justify-between bg-black'>
       <Link href='/' className='text-white p-3 text-3xl font-bold text-center mt-4'>My Expense Tracker</Link>
       {session?.user ? (

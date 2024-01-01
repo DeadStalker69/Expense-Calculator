@@ -2,7 +2,14 @@
 import React, { useState, useEffect } from 'react'
 import moment from 'moment'
 
+import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
+
 const ConversionCalcPage = (page) => {
+  
+  const router = useRouter();
+  const { data: session } = useSession();
+
   const currencies = ['USD (\u0024)', 'AUD (\u0024)', 'EURO (\u20AC)', 'CAD (\u0024)'];
   const [foreignCurrency, setforeignCurrency] = useState("")
   const [amount, setAmount] = useState("")
@@ -23,7 +30,7 @@ function ConvertedValueBloack({ amount, value, onChange }) {
     </div>
   );
 }
-  const submitCredit = (convertedValue)=> {
+  const submitCredit =  async (convertedValue)=> {
     const amount = convertedValue
     const desc = "Got foreign currency"
     const mode = "online"
@@ -50,10 +57,33 @@ function ConvertedValueBloack({ amount, value, onChange }) {
     Amountyet = JSON.parse(Amountyet)
     Amountyet += amount
     localStorage.setItem('Total Amount', JSON.stringify(Amountyet))
+
+    try {
+      const response = await fetch('/api/history/new', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: session?.user.id,
+          amount: amount,
+          desc: desc,
+          mode: mode,
+          date: CurrentDate,
+        })
+      })
+      if(response.ok)
+      {
+      setamount("")
+      setdesc("")
+      router.push('./')
+      }
+    
+  }
+  catch(error) {
+    console.log(error)
+  }
   } 
 
 
-  const submitDebit = (convertedValue)=> {
+  const submitDebit = async (convertedValue)=> {
     const amount = 0 - convertedValue
     const desc = "Paid in foreign currency"
     const mode = "online"
@@ -80,6 +110,29 @@ function ConvertedValueBloack({ amount, value, onChange }) {
     Amountyet = JSON.parse(Amountyet)
     Amountyet += amount
     localStorage.setItem('Total Amount', JSON.stringify(Amountyet))
+
+    try {
+      const response = await fetch('/api/history/new', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: session?.user.id,
+          amount: amount,
+          desc: desc,
+          mode: mode,
+          date: CurrentDate,
+        })
+      })
+      if(response.ok)
+      {
+      setamount("")
+      setdesc("")
+      router.push('./')
+      }
+    
+  }
+  catch(error) {
+    console.log(error)
+  }
   } 
   return (
     <>

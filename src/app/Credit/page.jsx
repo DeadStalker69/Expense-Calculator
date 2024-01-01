@@ -35,7 +35,7 @@ const CreditPage = () => {
         <h5 className='text-xl font-semibold pl-10 min-w-[25%]'>{'\u20B9'}{t.amount}</h5>
         <h6 className='text-center truncate text-xl font-semibold min-w-[25%] max-w-[25%]'>{t.desc}</h6>
         <h6 className='text-center text-xl font-semibold min-w-[25%]'>{t.mode}</h6>
-        <h6 className='text-right text-xl font-semibold pr-5 min-w-[25%]'>{t.CurrentDate}</h6>
+        <h6 className='text-right text-xl font-semibold pr-5 min-w-[25%]'>{t.date}</h6>
       </li>
       )
     }

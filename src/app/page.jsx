@@ -6,63 +6,16 @@ import Form from './Form'
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import moment from 'moment'
+import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 
-const getHistory = ()=> {
-  let list = localStorage.getItem('History')
-  if(list)
-  {
-    return JSON.parse(localStorage.getItem('History'))
-  }
-  else{
-    return [];
-  }
-}
 
-const getCredit = ()=> {
-  let list = localStorage.getItem('Total Credit')
-  if(list)
-  {
-    return JSON.parse(localStorage.getItem('Total Credit'))
-  }
-  else{
-    return 0;
-  }
-}
 
-const getDebit = ()=> {
-  let list = localStorage.getItem('Total Debit')
-  if(list)
-  {
-    return JSON.parse(localStorage.getItem('Total Debit'))
-  }
-  else{
-    return 0;
-  }
-}
-
-const getLoan = ()=> {
-  let list = localStorage.getItem('Total Loan')
-  if(list)
-  {
-    return JSON.parse(localStorage.getItem('Total Loan'))
-  }
-  else{
-    return 0;
-  }
-}
-
-const getAmount = ()=> {
-  let list = localStorage.getItem('Total Amount')
-  if(list)
-  {
-    return JSON.parse(localStorage.getItem('Total Amount'))
-  }
-  else{
-    return 0;
-  }
-}
 
 const page = () => {
+
+  const router = useRouter();
+  const { data: session } = useSession();
   
   const [amount, setamount] = useState("")
   const [desc, setdesc] = useState("")
@@ -70,14 +23,38 @@ const page = () => {
   const modes = ['cash', 'online', 'loan'];
   const [mode, setMode] = useState("cash")
 
-  const [credit, setcredit] = useState(getCredit())
-  const [debit, setDebit] = useState(getDebit())
-  const [loan, setLoan] = useState(getLoan())
-  const [total, settotal] = useState(getAmount())
+  const [credit, setcredit] = useState(0)
+  const [debit, setDebit] = useState(0)
+  const [loan, setLoan] = useState(0)
+  const [total, settotal] = useState(0)
 
-  const [mainTask, setMainTask] = useState(getHistory())
+  const [mainTask, setMainTask] = useState([])
 
-  const submitHandler = (e)=>{
+  useEffect(()=> {
+    const fetchHistory = async ()=> {
+      const response = await fetch(`/api/users/${session?.user.id}/posts`)
+      const data = await response.json()
+
+      setMainTask(data)
+    }
+    if(session?.user.id) fetchHistory()
+  }, [session?.user.id])
+
+
+  useEffect(()=> {
+    const fetchtable = async ()=> {
+      const response = await fetch(`/api/users/${session?.user.id}/table`)
+      const data = await response.json()
+
+      setDebit(data.debit)
+      setcredit(data.credit)
+      setLoan(data.loan)
+      settotal(data.loan)
+    }
+    if(session?.user.id) fetchtable()
+  }, [session?.user.id])  
+
+  const submitHandler = async (e)=>{
     e.preventDefault()
     const currentCredit = parseFloat(credit);
     const currentDebit = parseFloat(debit);
@@ -120,13 +97,46 @@ const page = () => {
       settotal(updatedTotal)
     }
   }
-    setMainTask([... mainTask, {amount, desc, mode, CurrentDate}])
-    console.log(mainTask)
-    setamount("")
-    setdesc("")
+    try {
+        const response = await fetch('/api/history/new', {
+          method: 'POST',
+          body: JSON.stringify({
+            email: session?.user.id,
+            amount: newAmount,
+            desc: desc,
+            mode: mode,
+            date: CurrentDate,
+          })
+        })
+        if(response.ok)
+        {
+        setamount("")
+        setdesc("")
+        }
+
+        const response1 = await fetch('/api/table/new', {
+          method: 'POST',
+          body: JSON.stringify({
+            email: session?.user.id,
+            total: currentTotal,
+            credit: currentCredit,
+            debit: currentDebit,
+            loan: currentLoan,
+          })
+        })
+        if(response1.ok)
+        {
+          console.log("Success")
+        router.push('./')
+        }
+      
+    }
+    catch(error) {
+      console.log(error)
+    }
   }
 
-  const loan_handler =(loan, credit, toal, debit)=>{
+  const loan_handler = async (loan, credit, toal, debit)=>{
     if(loan < 0)
     {
       toast.info("No pending loan amount.", {
@@ -164,6 +174,29 @@ const page = () => {
       settotal(toal)
       setLoan("0")
       setDebit(debit)
+
+      try {
+        const response = await fetch('/api/history/new', {
+          method: 'POST',
+          body: JSON.stringify({
+            email: session?.user.id,
+            amount: loan,
+            desc: "Loan repaid",
+            mode: "loan",
+            date: CurrentDate,
+          })
+        })
+        if(response.ok)
+        {
+        setamount("")
+        setdesc("")
+        router.push('./')
+        }
+      
+    }
+    catch(error) {
+      console.log(error)
+    }
 
       toast.success("Loan Repaid", {
         position: "top-center",
@@ -209,7 +242,7 @@ const page = () => {
         <h5 className='text-xl font-semibold pl-10 min-w-[25%]'>{'\u20B9'}{t.amount}</h5>
         <h6 className='text-center truncate text-xl font-semibold min-w-[25%] max-w-[25%]'>{t.desc}</h6>
         <h6 className='text-center text-xl font-semibold min-w-[25%]'>{t.mode}</h6>
-        <h6 className='text-right text-xl font-semibold pr-5 min-w-[25%]'>{t.CurrentDate}</h6>
+        <h6 className='text-right text-xl font-semibold pr-5 min-w-[25%]'>{t.date}</h6>
       </li>
       )
     })
