@@ -5,6 +5,9 @@ import moment from 'moment'
 import { useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 const ConversionCalcPage = (page) => {
   
   const router = useRouter();
@@ -15,6 +18,25 @@ const ConversionCalcPage = (page) => {
   const [amount, setAmount] = useState("")
   const [value, setValue] = useState("")
   const [convertedValue, setconvertedValue] = useState("")
+  const [credit, setcredit] = useState(0)
+  const [debit, setDebit] = useState(0)
+  const [loan, setLoan] = useState(0)
+  const [total, settotal] = useState(0)
+
+  useEffect(()=> {
+    const fetchtable = async ()=> {
+      const response = await fetch(`/api/users/${session?.user.id}/table`)
+      const data = await response.json()
+
+      data.map((t)=> {
+        setDebit(t.debit)
+        setcredit(t.credit)
+        setLoan(t.loan)
+        settotal(t.total)
+      })
+    }
+    if(session?.user.id) fetchtable()
+  }, [session?.user.id])  
 
   
 function ConvertedValueBloack({ amount, value, onChange }) {
@@ -36,27 +58,27 @@ function ConvertedValueBloack({ amount, value, onChange }) {
     const mode = "online"
     const CurrentDate = moment().format('MMMM Do YYYY')
     
-    let updatedMainTask
-    let MainTaskYet = localStorage.getItem('History')
-    if(MainTaskYet)
-    {
-      updatedMainTask = JSON.parse(MainTaskYet)
-      updatedMainTask = [... updatedMainTask, {amount, desc, mode, CurrentDate}]
-    }
-    else {
-      updatedMainTask = [{amount, desc, mode, CurrentDate}]
-    }
-    localStorage.setItem('History', JSON.stringify(updatedMainTask))
+    // let updatedMainTask
+    // let MainTaskYet = localStorage.getItem('History')
+    // if(MainTaskYet)
+    // {
+    //   updatedMainTask = JSON.parse(MainTaskYet)
+    //   updatedMainTask = [... updatedMainTask, {amount, desc, mode, CurrentDate}]
+    // }
+    // else {
+    //   updatedMainTask = [{amount, desc, mode, CurrentDate}]
+    // }
+    // localStorage.setItem('History', JSON.stringify(updatedMainTask))
 
-    let Credityet = localStorage.getItem('Total Credit')
-    Credityet = JSON.parse(Credityet)
-    Credityet += amount
-    localStorage.setItem('Total Credit', JSON.stringify(Credityet))
+    // let Credityet = localStorage.getItem('Total Credit')
+    // Credityet = JSON.parse(Credityet)
+    // Credityet += amount
+    // localStorage.setItem('Total Credit', JSON.stringify(Credityet))
 
-    let Amountyet = localStorage.getItem('Total Amount')
-    Amountyet = JSON.parse(Amountyet)
-    Amountyet += amount
-    localStorage.setItem('Total Amount', JSON.stringify(Amountyet))
+    // let Amountyet = localStorage.getItem('Total Amount')
+    // Amountyet = JSON.parse(Amountyet)
+    // Amountyet += amount
+    // localStorage.setItem('Total Amount', JSON.stringify(Amountyet))
 
     try {
       const response = await fetch('/api/history/new', {
@@ -71,15 +93,34 @@ function ConvertedValueBloack({ amount, value, onChange }) {
       })
       if(response.ok)
       {
-      setamount("")
-      setdesc("")
       router.push('./')
       }
+      const response1 = await fetch('/api/table/new', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: session?.user.id,
+          total: total + amount,
+          credit: credit + amount,
+          debit: debit,
+          loan: loan,
+        })
+      })
     
   }
   catch(error) {
     console.log(error)
   }
+  toast.success("Transaction added successfully.", {
+    position: "top-center",
+    autoClose: 3000,
+    hideProgressBar: false,
+    closeOnClick: true,
+    pauseOnHover: false,
+    draggable: false,
+    progress: undefined,
+    theme: "dark",
+  }
+  )
   } 
 
 
@@ -88,28 +129,44 @@ function ConvertedValueBloack({ amount, value, onChange }) {
     const desc = "Paid in foreign currency"
     const mode = "online"
     const CurrentDate = moment().format('MMMM Do YYYY')
-    
-    let updatedMainTask
-    let MainTaskYet = localStorage.getItem('History')
-    if(MainTaskYet)
+
+    if(convertedValue > total)
     {
-      updatedMainTask = JSON.parse(MainTaskYet)
-      updatedMainTask = [... updatedMainTask, {amount, desc, mode, CurrentDate}]
+    toast.error("Debit amount cannot be more than total holdings.", {
+      position: "top-center",
+      autoClose: 3000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: false,
+      draggable: false,
+      progress: undefined,
+      theme: "dark",
+      });
+      return;
     }
     else {
-      updatedMainTask = [{amount, desc, mode, CurrentDate}]
-    }
-    localStorage.setItem('History', JSON.stringify(updatedMainTask))
+        
+    // let updatedMainTask
+    // let MainTaskYet = localStorage.getItem('History')
+    // if(MainTaskYet)
+    // {
+    //   updatedMainTask = JSON.parse(MainTaskYet)
+    //   updatedMainTask = [... updatedMainTask, {amount, desc, mode, CurrentDate}]
+    // }
+    // else {
+    //   updatedMainTask = [{amount, desc, mode, CurrentDate}]
+    // }
+    // localStorage.setItem('History', JSON.stringify(updatedMainTask))
 
-    let Debityet = localStorage.getItem('Total Debit')
-    Debityet = JSON.parse(Debityet)
-    Debityet += amount
-    localStorage.setItem('Total Debit', JSON.stringify(Debityet))
+    // let Debityet = localStorage.getItem('Total Debit')
+    // Debityet = JSON.parse(Debityet)
+    // Debityet += amount
+    // localStorage.setItem('Total Debit', JSON.stringify(Debityet))
 
-    let Amountyet = localStorage.getItem('Total Amount')
-    Amountyet = JSON.parse(Amountyet)
-    Amountyet += amount
-    localStorage.setItem('Total Amount', JSON.stringify(Amountyet))
+    // let Amountyet = localStorage.getItem('Total Amount')
+    // Amountyet = JSON.parse(Amountyet)
+    // Amountyet += amount
+    // localStorage.setItem('Total Amount', JSON.stringify(Amountyet))
 
     try {
       const response = await fetch('/api/history/new', {
@@ -124,15 +181,35 @@ function ConvertedValueBloack({ amount, value, onChange }) {
       })
       if(response.ok)
       {
-      setamount("")
-      setdesc("")
       router.push('./')
       }
+      const response1 = await fetch('/api/table/new', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: session?.user.id,
+          total: total + amount,
+          credit: credit,
+          debit: debit + amount,
+          loan: loan,
+        })
+      })
     
   }
   catch(error) {
     console.log(error)
   }
+  toast.success("Transaction added successfully.", {
+    position: "top-center",
+    autoClose: 3000,
+    hideProgressBar: false,
+    closeOnClick: true,
+    pauseOnHover: false,
+    draggable: false,
+    progress: undefined,
+    theme: "dark",
+  }
+  )
+}
   } 
   return (
     <>
@@ -170,6 +247,7 @@ function ConvertedValueBloack({ amount, value, onChange }) {
       <button className='bg-black text-white px-4 py-3 text-2xl font-bold rounded m-5' onClick={()=> {submitCredit(convertedValue)}}>Add To Credit</button>
       <button className='bg-black text-white px-4 py-3 text-2xl font-bold rounded m-5' onClick={()=> {submitDebit(convertedValue)}}>Add To Debit</button>
       </div>
+      <ToastContainer />
     </>
   )
 }

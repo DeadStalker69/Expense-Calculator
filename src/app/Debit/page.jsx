@@ -1,30 +1,30 @@
 "use client"
 import React, { useEffect, useState } from 'react';
 import History from '../History';
-
-const getHistory = ()=> {
-  let list = localStorage.getItem('History')
-  console.log(list)
-
-  if(list)
-  {
-    return JSON.parse(localStorage.getItem('History'))
-  }
-  else{
-    return [];
-  }
-}
+import { useSession } from 'next-auth/react'
 
 const DebitPage = () => {
 
-  const [mainTask, setmainTask] = useState(getHistory)
+  const { data: session } = useSession();
+  const [mainTask, setmainTask] = useState([])
+
+  useEffect(()=> {
+    const fetchHistory = async ()=> {
+      const response = await fetch(`/api/users/${session?.user.id}/posts`)
+      const data = await response.json()
+
+      setmainTask(data)
+    }
+    if(session?.user.id) fetchHistory()
+  }, [session?.user.id, mainTask])
+
 
   let renderTask = <h2 className='text-center'>No Transaction History Availible</h2>
   if(mainTask.length>0)
   {
     renderTask = mainTask.map((t,i)=>{  
     let listColor
-    if(t.amount < 0)
+    if(t.amount < 0 && t.mode != 'loan')
     {
       return(
         <li key={i} className='border-sky-300 border-b-2 flex justify-between mb-4' style={{backgroundImage: listColor}}>

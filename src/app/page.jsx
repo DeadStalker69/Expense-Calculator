@@ -38,7 +38,7 @@ const page = () => {
       setMainTask(data)
     }
     if(session?.user.id) fetchHistory()
-  }, [session?.user.id])
+  }, [session?.user.id, mainTask])
 
 
   useEffect(()=> {
@@ -46,13 +46,15 @@ const page = () => {
       const response = await fetch(`/api/users/${session?.user.id}/table`)
       const data = await response.json()
 
-      setDebit(data.debit)
-      setcredit(data.credit)
-      setLoan(data.loan)
-      settotal(data.loan)
+      data.map((t)=> {
+        setDebit(t.debit)
+        setcredit(t.credit)
+        setLoan(t.loan)
+        settotal(t.total)
+      })
     }
     if(session?.user.id) fetchtable()
-  }, [session?.user.id])  
+  }, [mainTask])  
 
   const submitHandler = async (e)=>{
     e.preventDefault()
@@ -68,6 +70,43 @@ const page = () => {
     {
       const updateLoan = currentLoan + newAmount
       setLoan(updateLoan)
+      try {
+        const response1 = await fetch('/api/table/new', {
+          method: 'POST',
+          body: JSON.stringify({
+            email: session?.user.id,
+            total: total,
+            credit: credit,
+            debit: debit,
+            loan: updateLoan,
+          })
+        })
+        if(!response1.ok)
+        {
+          throw new error("Failed to fetch response 1")
+        }
+
+        const response2 = await fetch('/api/history/new', {
+          method: 'POST',
+          body: JSON.stringify({
+            email: session?.user.id,
+            amount: newAmount,
+            desc: desc,
+            mode: mode,
+            date: CurrentDate,
+          })
+        })
+        if(!response2.ok)
+        {
+          throw new error("Failed to fetch response 2")
+        }
+
+        console.log("Both APIs called successfully")
+      }
+      catch(error)
+      {
+        console.log(error)
+      }
     }
     else {
     if(newAmount>0)
@@ -75,6 +114,43 @@ const page = () => {
       const updatedCredit = currentCredit + newAmount
       setcredit(updatedCredit)
       settotal(updatedTotal)
+      try {
+        const response1 = await fetch('/api/table/new', {
+          method: 'POST',
+          body: JSON.stringify({
+            email: session?.user.id,
+            total: updatedTotal,
+            credit: updatedCredit,
+            debit: debit,
+            loan: loan,
+          })
+        })
+        if(!response1.ok)
+        {
+          throw new error("Failed to fetch response 1")
+        }
+
+        const response2 = await fetch('/api/history/new', {
+          method: 'POST',
+          body: JSON.stringify({
+            email: session?.user.id,
+            amount: newAmount,
+            desc: desc,
+            mode: mode,
+            date: CurrentDate,
+          })
+        })
+        if(!response2.ok)
+        {
+          throw new error("Failed to fetch response 2")
+        }
+
+        console.log("Both APIs called successfully")
+      }
+      catch(error)
+      {
+        console.log(error)
+      }
     }
     if(newAmount<0)
     {
@@ -95,10 +171,23 @@ const page = () => {
       const updatedDebit = currentDebit + newAmount
       setDebit(updatedDebit)
       settotal(updatedTotal)
-    }
-  }
-    try {
-        const response = await fetch('/api/history/new', {
+      try {
+        const response1 = await fetch('/api/table/new', {
+          method: 'POST',
+          body: JSON.stringify({
+            email: session?.user.id,
+            total: updatedTotal,
+            credit: credit,
+            debit: updatedDebit,
+            loan: loan,
+          })
+        })
+        if(!response1.ok)
+        {
+          throw new error("Failed to fetch response 1")
+        }
+
+        const response2 = await fetch('/api/history/new', {
           method: 'POST',
           body: JSON.stringify({
             email: session?.user.id,
@@ -108,35 +197,36 @@ const page = () => {
             date: CurrentDate,
           })
         })
-        if(response.ok)
+        if(!response2.ok)
         {
-        setamount("")
-        setdesc("")
+          throw new error("Failed to fetch response 2")
         }
 
-        const response1 = await fetch('/api/table/new', {
-          method: 'POST',
-          body: JSON.stringify({
-            email: session?.user.id,
-            total: currentTotal,
-            credit: currentCredit,
-            debit: currentDebit,
-            loan: currentLoan,
-          })
-        })
-        if(response1.ok)
-        {
-          console.log("Success")
-        router.push('./')
-        }
-      
-    }
-    catch(error) {
-      console.log(error)
+        console.log("Both APIs called successfully")
+      }
+      catch(error)
+      {
+        console.log(error)
+      }
     }
   }
+      toast.success("Transaction added successfully.", {
+        position: "top-center",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: false,
+        draggable: false,
+        progress: undefined,
+        theme: "dark",
+      }
+      )
+      setamount("")
+      setdesc("")
+      }
 
   const loan_handler = async (loan, credit, toal, debit)=>{
+
     if(loan < 0)
     {
       toast.info("No pending loan amount.", {
@@ -186,15 +276,29 @@ const page = () => {
             date: CurrentDate,
           })
         })
-        if(response.ok)
-        {
-        setamount("")
-        setdesc("")
-        router.push('./')
-        }
-      
     }
     catch(error) {
+      console.log(error)
+    }
+    try {
+      const response1 = await fetch('/api/table/new', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: session?.user.id,
+          total: total,
+          credit: parseFloat(credit),
+          debit: parseFloat(debit),
+          loan: 0,
+        })
+      })
+      if(response1.ok)
+      {
+        console.log("Success")
+      router.push('./')
+      }
+    }
+    catch(error)
+    {
       console.log(error)
     }
 
@@ -248,30 +352,6 @@ const page = () => {
     })
   }
 
-  useEffect(()=> {
-    localStorage.setItem('History', JSON.stringify(mainTask))
-  }, [mainTask]
-  )
-
-  useEffect(()=> {
-    localStorage.setItem('Total Credit', JSON.stringify(credit))
-  }, [credit]
-  )
-
-  useEffect(()=> {
-    localStorage.setItem('Total Debit', JSON.stringify(debit))
-  }, [debit]
-  )
-
-  useEffect(()=> {
-    localStorage.setItem('Total Loan', JSON.stringify(loan))
-  }, [loan]
-  )
-
-  useEffect(()=> {
-    localStorage.setItem('Total Amount', JSON.stringify(total))
-  }, [total]
-  )
   return (
     <>
     <Form amount={amount} desc={desc} mode={mode} modes={modes} submitHandler={submitHandler} setamount={setamount} setdesc={setdesc} setMode={setMode} />

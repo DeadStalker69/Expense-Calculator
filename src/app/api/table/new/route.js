@@ -1,7 +1,7 @@
 import { connectToDB } from "@/utils/database";
 import table from "@/models/table";
 
-export const POST = async (req)=> {
+const handler = async (req)=> {
 
     const { email, total, debit, credit, loan } = await req.json()
     try{
@@ -26,7 +26,7 @@ export const POST = async (req)=> {
         }
         else {
             existingtable.overwrite(        {
-                total: total, debit:debit, credit:credit, loan:loan
+                email: email, total: total, debit:debit, credit:credit, loan:loan
             })
         await existingtable.save()
         return new Response(JSON.stringify(existingtable), {status:201})
@@ -38,3 +38,4 @@ export const POST = async (req)=> {
         return new Response("Failed", {status:500})
     }
 }
+export {handler as POST, handler as PUT}

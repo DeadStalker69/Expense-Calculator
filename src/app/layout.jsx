@@ -1,7 +1,6 @@
 import Navbar from './Navbar'
 import './globals.css'
 import { Inter } from 'next/font/google'
-import { DataProvider }  from '../../Helper/DataContext'
 import Provider from './Provider'
 
 const inter = Inter({ subsets: ['latin'] })
