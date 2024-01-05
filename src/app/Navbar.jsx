@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+//import { signIn, signOut, useSession, getProviders } from 'next-auth/react';
 import { signIn, signOut, useSession, getProviders } from 'next-auth/react';
 
 const Navbar = () => {
